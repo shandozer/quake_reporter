@@ -10,7 +10,7 @@ import datetime
 import argparse
 
 
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 
 def get_parser():
@@ -21,7 +21,25 @@ def get_parser():
 
     parser.add_argument('-t', '--timeframe', action="store", choices=['hour', 'week', 'day', 'month'])
 
+    parser.add_argument('-s', '--savejson', action="store_true")
+
     return parser
+
+
+def get_data_from_api(url):
+
+    page = urllib2.urlopen(url)
+
+    data = page.read()
+
+    return data
+
+
+def save_json_data(data, req_details):
+
+    with open('quake_request_{}_{:%Y_%m_%d_%H:%M}.json'.format(req_details, datetime.datetime.now()), 'wb') as f:
+
+        json.dump(data, f)
 
 
 def print_results(data, magnitude):
@@ -85,6 +103,7 @@ def main():
         intro_statement += ' within the last {}...'.format(t)
 
     else:
+        intro_statement += ' (No timespan selected, using default: 1 week)'
         t = 'week'
 
     print intro_statement
@@ -106,17 +125,32 @@ def main():
             mag = 1.0  # anything less than 2.5 gets the 1.0+ range
     else:
 
+        print '\nNo Magnitude requested, using default... (2.5+)'
+
         mag = 2.5  # a medium sized default
+
+    # Now grab your data
 
     api_url = 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/{}_{}.geojson'.format(mag, t)
 
-    page = urllib2.urlopen(api_url)
+    try:
+        data = get_data_from_api(api_url)
 
-    data = page.read()
+    except urllib2.URLError:
 
-    if data:
+        print '\nUH OH! We were unable to extract any data! \n\n\t-->Check your Internet/WiFi Access? '
+        exit(1)
+
+    if data and args.savejson:
+
+        request_params = '{}mag-1{}'.format(mag, t)
+
+        save_json_data(data, request_params)
+
+    elif data:
 
         print_results(data, mag)
+
 
 if __name__ == '__main__':
 
