@@ -10,18 +10,21 @@ import datetime
 import argparse
 
 
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 
 
 def get_parser():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-m', '--magnitude', action="store", type=float)
+    parser.add_argument('-m', '--magnitude', action="store", type=float,
+                        help='Please enter minimum magnitude desired: 1.0, 2.5, or 4.5', default=2.5)
 
-    parser.add_argument('-t', '--timeframe', action="store", choices=['hour', 'week', 'day', 'month'])
+    parser.add_argument('-t', '--timeframe', action="store", choices=['hour', 'day', 'week', 'month'],
+                        help='Collect data over the last hour, day, week, or month.')
 
-    parser.add_argument('-s', '--savejson', action="store_true")
+    parser.add_argument('-s', '--savejson', action="store_true",
+                        help='Use this flag to save output to a .json')
 
     return parser
 
@@ -54,17 +57,16 @@ def print_results(data, magnitude):
 
     print '\n--> {} events found in the {}\n'.format(str(count), json_data['metadata']['title'].split(', ')[1])
 
-    # print sorted(json_data['features'])
-
-    tsunami_quakes = [quake for quake in sorted(json_data['features']) if quake['properties']['tsunami'] == 1]
+    tsunami_quakes = [quake for quake in json_data['features'] if quake['properties']['tsunami'] == 1]
 
     tsunami_count = len(tsunami_quakes)
 
     if tsunami_count > 0:
         print "\t{} of these caused TSUNAMI\n".format(tsunami_count)
 
-    for i in sorted(json_data['features']):
+    sorted_json = sorted(json_data['features'], key=lambda k: k['properties'].get('time', 0), reverse=True)
 
+    for i in sorted_json:
         print '*' * 18 + '\n'
         if i['properties']['time']:
 
@@ -85,6 +87,8 @@ def print_results(data, magnitude):
         if i['properties']['mag']:
 
             print '%2.1f' % i['properties']['mag'] + ',', i['properties']['place'], '\n'
+
+        print 'Depth: ' + str(i['geometry']['coordinates'][2]) + 'km'
 
         print '*' * 20
 

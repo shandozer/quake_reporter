@@ -1,6 +1,8 @@
 # quake_datafeed.py
 Gathers global quake (and tsunami) information and presents to user.
 
+## Version 0.2.1
+Provides sorted results (descending time order) and prints depth info.
 ## Version 0.2.0
 Lets you save the json data from your request.
 ## Version 0.1.0
